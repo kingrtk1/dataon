@@ -1,39 +1,37 @@
-import subprocess
-import time
+import android
 
-def check_wifi_status():
-    result = subprocess.run(["termux-wifi-connectioninfo"], capture_output=True, text=True)
-    connection_info = result.stdout.strip().split("\n")
-    if len(connection_info) > 1 and "state: CONNECTED" in connection_info[1]:
-        return True
-    return False
+droid = android.Android()
 
-def activate_mobile_data():
-    subprocess.run(["termux-tts-speak", "Activating mobile data"])
+def toggle_wifi():
+    wifi_status = droid.checkWifiState().result
+    if wifi_status:
+        droid.toggleWifiState(False)
+        print("WiFi turned off")
+    else:
+        droid.toggleWifiState(True)
+        print("WiFi turned on")
 
-    # Run Termux API command to enable mobile data
-    subprocess.run(["termux-sensor", "-s", "accelerometer"])
-
-def deactivate_mobile_data():
-    subprocess.run(["termux-tts-speak", "Deactivating mobile data"])
-
-    # Run Termux API command to disable mobile data
-    subprocess.run(["termux-sensor", "-s", "accelerometer"])
+def toggle_mobile_data():
+    mobile_data_status = droid.toggleMobileDataState().result
+    if mobile_data_status:
+        print("Mobile data turned on")
+    else:
+        print("Mobile data turned off")
 
 def main():
-    mobile_data_activated = False
     while True:
-        print("Running...")
-        wifi_connected = check_wifi_status()
-        if not wifi_connected and not mobile_data_activated:
-            print("Waiting for connection to be lost...")
-            activate_mobile_data()
-            mobile_data_activated = True
-        elif wifi_connected and mobile_data_activated:
-            print("WiFi connection restored. Deactivating mobile data...")
-            deactivate_mobile_data()
-            mobile_data_activated = False
-        time.sleep(1)  # Check every 10 seconds
+        print("1. Toggle WiFi")
+        print("2. Toggle Mobile Data")
+        print("3. Exit")
+        choice = int(input("Enter your choice: "))
+        if choice == 1:
+            toggle_wifi()
+        elif choice == 2:
+            toggle_mobile_data()
+        elif choice == 3:
+            break
+        else:
+            print("Invalid choice")
 
 if __name__ == "__main__":
     main()
