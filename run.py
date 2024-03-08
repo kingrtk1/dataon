@@ -1,37 +1,31 @@
-import android
+import subprocess
+import time
 
-droid = android.Android()
+def check_wifi_status():
+    result = subprocess.run(["termux-wifi-connectioninfo"], capture_output=True, text=True)
+    connection_info = result.stdout.strip().split("\n")
+    if len(connection_info) > 1 and "state: CONNECTED" in connection_info[1]:
+        return True
+    return False
 
-def toggle_wifi():
-    wifi_status = droid.checkWifiState().result
-    if wifi_status:
-        droid.toggleWifiState(False)
-        print("WiFi turned off")
-    else:
-        droid.toggleWifiState(True)
-        print("WiFi turned on")
-
-def toggle_mobile_data():
-    mobile_data_status = droid.toggleMobileDataState().result
-    if mobile_data_status:
-        print("Mobile data turned on")
-    else:
-        print("Mobile data turned off")
+def toggle_mobile_data(enable):
+    action = "enable" if enable else "disable"
+    subprocess.run(["termux-sensor", "-s", "accelerometer", action])  # Turn on/off mobile data sensors
 
 def main():
+    wifi_connected = False
     while True:
-        print("1. Toggle WiFi")
-        print("2. Toggle Mobile Data")
-        print("3. Exit")
-        choice = int(input("Enter your choice: "))
-        if choice == 1:
-            toggle_wifi()
-        elif choice == 2:
-            toggle_mobile_data()
-        elif choice == 3:
-            break
-        else:
-            print("Invalid choice")
+        print("Running...")
+        new_wifi_status = check_wifi_status()
+        if not wifi_connected and new_wifi_status:
+            print("WiFi connected. Turning off sensors.")
+            toggle_mobile_data(False)  # Turn off sensors when WiFi connects
+            wifi_connected = True
+        elif wifi_connected and not new_wifi_status:
+            print("WiFi connection lost. Turning on sensors.")
+            toggle_mobile_data(True)  # Turn on sensors when WiFi disconnects
+            wifi_connected = False
+        time.sleep(1)  # Check every 10 seconds
 
 if __name__ == "__main__":
     main()
